@@ -16,3 +16,26 @@
         exit $LASTEXITCODE
     }
 }
+
+function Invoke-CommandWithTimeout {
+    param (
+        [scriptblock]$ScriptBlock,
+        [int]$TimeoutSeconds
+    )
+
+    # Start the job
+    Start-Job -ScriptBlock $ScriptBlock
+
+    # Wait until the job is done or the timeout is reached
+    $job = Get-Job | Wait-Job -Timeout $TimeoutSeconds
+
+    # Check if the job has finished
+    if ($job.JobStateInfo.State -eq "Completed") {
+        # The job has finished
+        Receive-Job $job
+    } else {
+        # The timeout has been reached, you can kill it if needed
+        Stop-Job $job
+        throw "The job has timed out"
+    }
+}
